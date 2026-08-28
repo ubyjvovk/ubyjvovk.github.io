@@ -1,0 +1,14 @@
+/* TEAM */
+
+ubyjvovk
+Building TigerTeamApp.com
+https://github.com/ubyjvovk
+
+/* SITE */
+
+Last update: 2026-08-28
+Language: English
+Doctype: HTML5
+Standards: HTML, CSS
+Software: a text editor
+Best viewed: in any browser, including yours
