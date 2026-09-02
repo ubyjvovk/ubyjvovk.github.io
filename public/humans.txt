@@ -1,14 +1,14 @@
 /* TEAM */
 
 ubyjvovk
-Building TigerTeamApp.com
+Engineer. Architect. Storyteller.
 https://github.com/ubyjvovk
 
 /* SITE */
 
-Last update: 2026-08-28
+Last update: 2026-09-02
 Language: English
 Doctype: HTML5
 Standards: HTML, CSS
-Software: a text editor
+Software: Astro, a text editor
 Best viewed: in any browser, including yours

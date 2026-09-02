@@ -1,0 +1,18 @@
+---
+import { site } from '../data/site';
+const year = new Date().getFullYear();
+---
+<footer class="site-footer shell">
+  <span>© {year} {site.title}</span>
+  <span class="footer-motto">⌘ &nbsp;{site.greek}&nbsp; ⌘</span>
+  <span>Built with <span class="heart" aria-hidden="true">♥</span><span class="sr-only"> love</span> and <code>&lt;/&gt;</code></span>
+</footer>
+
+<style>
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+</style>

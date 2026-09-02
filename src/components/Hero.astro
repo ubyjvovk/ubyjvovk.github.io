@@ -1,0 +1,42 @@
+---
+import Icon from './Icon.astro';
+import { site, socials } from '../data/site';
+import type { SocialName } from '../data/site';
+
+// `white-space: pre-line` keeps the authored line breaks.
+const introText = `${site.tagline}\n${site.intro}`;
+---
+<section class="hero shell" id="top">
+  <div class="hero-copy">
+    <h1>{site.title}</h1>
+
+    <p class="motto">
+      <strong>{site.motto.lead}</strong> {site.motto.tail}
+    </p>
+
+    <p class="intro">{introText}</p>
+
+    <div class="hero-links">
+      {socials.map((s) => (
+        <a
+          href={s.href}
+          rel={s.name === 'email' ? undefined : 'me noreferrer'}
+          target={s.name === 'email' ? undefined : '_blank'}
+        >
+          <Icon name={s.name as SocialName} />{s.label}
+        </a>
+      ))}
+    </div>
+  </div>
+
+  <div class="hero-art">
+    <img
+      src="/images/hero-mars.png"
+      width="624"
+      height="595"
+      alt="Line-drawn astronaut in a pale spacesuit standing over a felled wolf, banjo in hand, against a Greek-futurist skyline."
+      fetchpriority="high"
+      decoding="async"
+    />
+  </div>
+</section>

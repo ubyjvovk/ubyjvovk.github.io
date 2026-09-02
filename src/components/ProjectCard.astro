@@ -1,0 +1,32 @@
+---
+import Icon from './Icon.astro';
+import type { Project } from '../data/site';
+
+interface Props { project: Project }
+const { project } = Astro.props;
+const { name, blurb, icon, tint, tags, repo, live } = project;
+---
+<article class="project-card">
+  <div class="project-top">
+    <span class={`project-icon tint-${tint}`} aria-hidden="true"><Icon name={icon} /></span>
+    <div>
+      <h3>{repo ? <a href={repo} target="_blank" rel="noreferrer">{name}</a> : name}</h3>
+      <p>{blurb}</p>
+    </div>
+  </div>
+
+  <div class="tags">{tags.map((t) => <span>{t}</span>)}</div>
+
+  <div class="card-links">
+    {repo && (
+      <a href={repo} target="_blank" rel="noreferrer" aria-label={`${name} on GitHub`}>
+        <Icon name="github" />
+      </a>
+    )}
+    {live && (
+      <a href={live} target="_blank" rel="noreferrer" aria-label={`${name} — live site`}>
+        <Icon name="external" />
+      </a>
+    )}
+  </div>
+</article>

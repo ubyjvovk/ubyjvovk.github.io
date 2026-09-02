@@ -1,0 +1,49 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const writings = (await getCollection('writings', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+const longDate = (d: Date) =>
+  d.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: '2-digit' });
+---
+<BaseLayout title="Writings" description="Notes and essays by ubyjvovk." current="Writings">
+  <div class="prose-page shell">
+    <a class="back" href="/">← back</a>
+    <h1>Writings</h1>
+
+    {writings.length > 0 ? (
+      <ul class="writing-list index">
+        {writings.map((w) => (
+          <li>
+            <a href={`/writings/${w.id}/`}>
+              <span>
+                {w.data.title}
+                {w.data.summary && <small>{w.data.summary}</small>}
+              </span>
+              <span class="when">{longDate(w.data.date)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="empty-note" style="margin-top:28px">Nothing published yet.</p>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .writing-list.index { margin-top: 32px; max-width: 68ch; }
+  .writing-list.index li { border-bottom: 1px solid var(--line); }
+  .writing-list.index li + li { margin-top: 0; }
+  .writing-list.index a { padding: 18px 0; align-items: start; }
+  .writing-list.index small {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font: 12px/1.6 var(--sans);
+  }
+  .writing-list.index .when { padding-top: 3px; }
+</style>

@@ -1,0 +1,28 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths = (async () => {
+  const writings = await getCollection('writings', ({ data }) => !data.draft);
+  return writings.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const longDate = (d: Date) =>
+  d.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: '2-digit' });
+---
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.summary ?? entry.data.title}
+  current="Writings"
+>
+  <article class="prose-page shell">
+    <a class="back" href="/writings/">← all writings</a>
+    <h1>{entry.data.title}</h1>
+    <time datetime={entry.data.date.toISOString()}>{longDate(entry.data.date)}</time>
+    <div class="prose-body"><Content /></div>
+  </article>
+</BaseLayout>

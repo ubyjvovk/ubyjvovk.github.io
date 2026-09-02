@@ -1,0 +1,54 @@
+---
+// Laurel wreath around a Λ. Leaves are generated so the spacing stays even;
+// the right branch is drawn once and mirrored for the left.
+const CX = 24;
+const CY = 25;
+const R = 14.5;
+const FROM = -76; // degrees, bottom of the branch
+const TO = 74; //    degrees, tip of the branch
+const COUNT = 8;
+
+const rad = (d: number) => (d * Math.PI) / 180;
+const round = (n: number) => Math.round(n * 100) / 100;
+
+const leaves = Array.from({ length: COUNT }, (_, i) => {
+  const a = FROM + ((TO - FROM) * i) / (COUNT - 1);
+  const grow = 1 - i / (COUNT * 1.7); // leaves taper toward the tip
+  const out = R + 2.3;
+  return {
+    x: round(CX + out * Math.cos(rad(a))),
+    y: round(CY - out * Math.sin(rad(a))),
+    // Tangent to the spine, tilted outward the way a laurel leaf sits.
+    rot: round((Math.atan2(-Math.cos(rad(a)), -Math.sin(rad(a))) * 180) / Math.PI + 22),
+    rx: round(3.6 * grow),
+    ry: round(1.55 * grow),
+  };
+});
+
+const spine = {
+  x1: round(CX + R * Math.cos(rad(FROM))),
+  y1: round(CY - R * Math.sin(rad(FROM))),
+  x2: round(CX + R * Math.cos(rad(TO))),
+  y2: round(CY - R * Math.sin(rad(TO))),
+};
+---
+<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+  <g fill="none" stroke="currentColor" stroke-width="0.9" opacity="0.75">
+    <g id="laurel-branch">
+      <path d={`M ${spine.x1} ${spine.y1} A ${R} ${R} 0 0 1 ${spine.x2} ${spine.y2}`} />
+      {leaves.map((l) => (
+        <ellipse cx={l.x} cy={l.y} rx={l.rx} ry={l.ry} transform={`rotate(${l.rot} ${l.x} ${l.y})`} />
+      ))}
+    </g>
+    <use href="#laurel-branch" transform={`matrix(-1 0 0 1 ${CX * 2} 0)`} />
+  </g>
+  <text
+    x={CX}
+    y={CY + 0.5}
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="16"
+    fill="currentColor"
+  >Λ</text>
+</svg>

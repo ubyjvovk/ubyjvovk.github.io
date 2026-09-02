@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ubyjvovk.github.io/sitemap-index.xml

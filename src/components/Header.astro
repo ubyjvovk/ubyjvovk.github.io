@@ -1,0 +1,41 @@
+---
+import Icon from './Icon.astro';
+import Sigil from './Sigil.astro';
+import { nav, socials } from '../data/site';
+
+interface Props { current?: string }
+const { current = 'Overview' } = Astro.props;
+
+// Anchors only resolve on the home page; prefix them elsewhere.
+const home = Astro.url.pathname === '/';
+const gh = socials.find((s) => s.name === 'github')!;
+---
+<header class="site-header shell">
+  <a class="sigil" href="/" aria-label="ubyjvovk — home"><Sigil /></a>
+
+  <nav class="nav" aria-label="Primary">
+    {nav.map((item) => (
+      <a
+        href={home ? item.href : `/${item.href}`}
+        aria-current={item.label === current ? 'page' : undefined}
+      >{item.label}</a>
+    ))}
+  </nav>
+
+  <div class="header-actions">
+    <a class="icon-button" href={gh.href} rel="me noreferrer" target="_blank" aria-label="GitHub">
+      <Icon name="github" />
+    </a>
+    <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle colour theme" aria-pressed="false">
+      <Icon name="sun" class="t-sun" />
+      <Icon name="moon" class="t-moon" />
+    </button>
+  </div>
+</header>
+
+<style>
+  /* Only one of the two glyphs shows, depending on the active theme. */
+  .icon-button :global(.t-moon) { display: none; }
+  :global(:root[data-theme='dark']) .icon-button :global(.t-sun) { display: none; }
+  :global(:root[data-theme='dark']) .icon-button :global(.t-moon) { display: block; }
+</style>
