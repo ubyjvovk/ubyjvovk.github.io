@@ -4,7 +4,7 @@
 export const site = {
   title: 'ubyjvovk',
   description:
-    'Engineer, architect, storyteller. Systems, code, and ideas at the edge of tech and imagination.',
+    'Building TigerTeamApp.com. Projects by ubyjvovk.',
   url: 'https://ubyjvovk.github.io',
   motto: { lead: 'KILL THE WOLF.', tail: 'BUILD THE FUTURE.' },
   tagline: 'Engineer. Architect. Storyteller.',
@@ -48,24 +48,30 @@ export type Project = {
   icon: IconName;
   tint: 'cyan' | 'rust' | 'green' | 'violet' | 'blue' | 'gold';
   tags: string[];
+  preview: string;
+  previewAlt: string;
   repo?: string;
   live?: string;
 };
 
+// Featured local DeepSeek branch, then GitHub pins and termpanes. Pins synced 2026-09-18.
 export const projects: Project[] = [
   {
-    name: 'quota_monitor',
-    blurb:
-      'One normalised view of LLM subscription quota across providers — terminal, macOS menu bar, Waybar and Omarchy.',
-    icon: 'gauge',
+    name: 'DeepSeek locally',
+    preview: '/images/projects/deepseek-local.jpg',
+    previewAlt: 'Local RTX 3090 and RTX 5080 setup documentation for DeepSeek-V4.1-Flash',
+    blurb: 'DeepSeek-V4.1-Flash, running locally on an RTX 3090 + RTX 5080.',
+    icon: 'neural',
     tint: 'cyan',
-    tags: ['Go', 'SwiftUI', 'CLI', 'macOS'],
-    repo: 'https://github.com/ubyjvovk/quota_monitor',
+    tags: ['Python', 'CUDA', 'local inference'],
+    repo: 'https://github.com/ubyjvovk/deepseek-v41-flash-5080-3090/tree/local-inference-with-rtx3090-and-5080',
   },
   {
     name: 'asciicity',
+    preview: '/images/projects/asciicity.png',
+    previewAlt: 'First-person city streets rendered in coloured ASCII',
     blurb:
-      'Walk real cities in first person, rendered as coloured ASCII with a green navigation HUD.',
+      'First-person cities, in ASCII.',
     icon: 'spires',
     tint: 'rust',
     tags: ['three.js', 'Vite', 'ASCII', 'maps'],
@@ -73,42 +79,66 @@ export const projects: Project[] = [
     live: 'https://ubyjvovk.github.io/asciicity/',
   },
   {
-    name: 'quotamon-omarchy',
+    name: 'quota_monitor',
+    preview: '/images/projects/quota_monitor.png',
+    previewAlt: 'Quota Monitor desktop app showing provider usage limits',
     blurb:
-      'An Omarchy bar plugin: a deliberately dumb renderer for quotamon --json, with install and update plumbing.',
+      'LLM subscription quotas, in one place.',
+    icon: 'gauge',
+    tint: 'cyan',
+    tags: ['Go', 'SwiftUI', 'CLI', 'macOS'],
+    repo: 'https://github.com/ubyjvovk/quota_monitor',
+  },
+  {
+    name: 'quotamon-omarchy',
+    preview: '/images/projects/quotamon-omarchy.png',
+    previewAlt: 'Quota Monitor in the Omarchy desktop bar',
+    blurb:
+      'Your LLM quotas in the Omarchy bar.',
     icon: 'panel',
     tint: 'green',
     tags: ['QML', 'Omarchy', 'Waybar'],
     repo: 'https://github.com/ubyjvovk/quotamon-omarchy',
   },
   {
-    name: 'sarge',
-    blurb:
-      'A friendly drill sergeant whose stated mission is admirably simple: keep you productive and fit.',
-    icon: 'stripes',
-    tint: 'violet',
-    tags: ['JavaScript', 'web', 'experiment'],
-    repo: 'https://github.com/ubyjvovk/sarge',
-    live: 'https://ubyjvovk.github.io/sarge/',
-  },
-  {
-    name: 'roll100',
-    blurb:
-      'A deliberately tiny random-number app: 0–99, once a second, with pause, one-off rolls, gauge and themes.',
-    icon: 'dice',
+    name: 'virt-viewer',
+    preview: '/images/projects/virt-viewer.jpg',
+    previewAlt: 'GitHub repository preview for virt-viewer',
+    blurb: 'A viewer for virtual machines over VNC and SPICE.',
+    icon: 'panel',
     tint: 'blue',
-    tags: ['TypeScript', 'Vite', 'minimal UI'],
-    repo: 'https://github.com/ubyjvovk/roll100',
-    live: 'https://ubyjvovk.github.io/roll100/',
+    tags: ["C", "GTK", "VNC", "SPICE"],
+    repo: 'https://github.com/ubyjvovk/virt-viewer',
   },
   {
-    name: 'rada_voting',
-    blurb:
-      'Verkhovna Rada voting data, plus the scraper and parser that make the raw parliamentary record usable.',
-    icon: 'ballot',
+    name: 'asciihack',
+    preview: '/images/projects/asciihack.png',
+    previewAlt: 'First-person NetHack dungeon rendered in ASCII',
+    blurb: 'NetHack in first-person and isometric ASCII.',
+    icon: 'spires',
     tint: 'gold',
-    tags: ['Python', 'data', 'scraping'],
-    repo: 'https://github.com/ubyjvovk/rada_voting',
+    tags: ["NetHack", "TypeScript", "ASCII"],
+    repo: 'https://github.com/ubyjvovk/asciihack',
+  },
+  {
+    name: 'nomouse',
+    preview: '/images/projects/nomouse.jpg',
+    previewAlt: 'GitHub repository preview for nomouse',
+    blurb: 'Control your Mac with hand gestures.',
+    icon: 'glasses',
+    tint: 'green',
+    tags: ["Python", "macOS", "MediaPipe"],
+    repo: 'https://github.com/ubyjvovk/nomouse',
+  },
+  {
+    name: 'termpanes',
+    preview: '/images/projects/termpanes.jpg',
+    previewAlt: 'GitHub repository preview for termpanes',
+    blurb: 'A programmable terminal multiplexer for Python.',
+    icon: 'panel',
+    tint: 'cyan',
+    tags: ["Python", "PTY", "terminal"],
+    repo: 'https://github.com/ubyjvovk/termpanes',
   },
 ];
 

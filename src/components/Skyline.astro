@@ -1,0 +1,262 @@
+<section class="sky-game" aria-label="Skyline patrol spaceship game">
+  <div class="game-hud">
+    <span>SKYLINE PATROL <span class="game-coordinate">/ <output data-speed aria-label="Speed multiplier">2.0×</output></span></span>
+    <span><output data-score aria-label="Score">000000</output> <span class="game-shields" data-shields aria-label="3 shields">◆ ◆ ◆</span></span>
+    <button type="button" class="game-pause" disabled>Pause</button>
+  </div>
+  <div class="game-stage">
+    <canvas width="400" height="96" tabindex="0" aria-label="Spaceship flight area" aria-describedby="game-help">Fly over a pixel city. Use the arrow keys to move, Space to fire, and fly through the gaps in the towers.</canvas>
+    <div class="game-overlay">
+      <p class="game-message" aria-live="polite">DODGE THE TOWERS. WATCH THE SKY.</p>
+      <button class="game-start intro-flash" type="button">PRESS ENTER TO START</button>
+    </div>
+  </div>
+  <div class="game-bottom">
+    <p id="game-help">↑ ↓ ← → move <span>·</span> space fire <span>·</span> esc pause</p>
+    <output data-wave aria-live="polite">FLY RIGHT. KEEP GOING.</output>
+  </div>
+  <div class="game-touch" aria-label="Touch flight controls">
+    <button type="button" data-control="ArrowLeft" aria-label="Move left">←</button>
+    <button type="button" data-control="ArrowUp" aria-label="Move up">↑</button>
+    <button type="button" data-control="ArrowDown" aria-label="Move down">↓</button>
+    <button type="button" data-control="ArrowRight" aria-label="Move right">→</button>
+    <button type="button" data-control="Space">FIRE</button>
+  </div>
+  <noscript>Enable JavaScript to play Skyline Patrol.</noscript>
+</section>
+
+<script>
+  import { newFlight, stepFlight, fireShot, flightSpeed } from '../lib/sky-game';
+  const root = document.querySelector<HTMLElement>('.sky-game')!;
+  const canvas = root.querySelector('canvas')!;
+  const ctx = canvas.getContext('2d')!;
+  const overlay = root.querySelector<HTMLElement>('.game-overlay')!;
+  const start = root.querySelector<HTMLButtonElement>('.game-start')!;
+  const pause = root.querySelector<HTMLButtonElement>('.game-pause')!;
+  const message = root.querySelector<HTMLElement>('.game-message')!;
+  const score = root.querySelector<HTMLOutputElement>('[data-score]')!;
+  const shields = root.querySelector<HTMLElement>('[data-shields]')!;
+  const speedLabel = root.querySelector<HTMLOutputElement>('[data-speed]')!;
+  const waveLabel = root.querySelector<HTMLOutputElement>('[data-wave]')!;
+  const keys = new Set<string>();
+  start.addEventListener('animationend', () => start.classList.remove('intro-flash'), { once: true });
+  let game = newFlight(canvas.width, canvas.height);
+  let state: 'ready' | 'playing' | 'paused' | 'over' = 'ready';
+  let frame = 0, last = 0, hudTime = 0;
+  let colors: Record<string, string> = {};
+  function palette() {
+    const style = getComputedStyle(root);
+    for (const name of ['bg', 'fg', 'muted', 'accent', 'line']) colors[name] = style.getPropertyValue(`--${name}`).trim();
+  }
+  function rect(x: number, y: number, w: number, h: number, color: string) {
+    ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), w, h);
+  }
+  function draw() {
+    const w = canvas.width, h = canvas.height, t = game.distance;
+    ctx.clearRect(0, 0, w, h);
+    for (let i = 0; i < w / 9; i++) {
+      const x = ((i * 43 - t * .12) % (w + 10) + w + 10) % (w + 10);
+      rect(x, 5 + (i * 17) % 59, 1, 1, colors.muted);
+    }
+    rect(w - 32 - t * .005 % 10, 9, 5, 5, colors.accent);
+    for (let layer = 0; layer < 2; layer++) {
+      const unit = layer ? 29 : 37, offset = t * (layer ? .45 : .18);
+      const first = Math.floor(offset / unit);
+      const ink = layer ? colors.muted : colors.line;
+      for (let i = first; i < first + w / unit + 2; i++) {
+        const x = i * unit - offset;
+        const height = 10 + ((i * 17 + layer * 23) % 35);
+        const width = 12 + ((i * 7) % 14), y = h - height;
+        rect(x, y, width, height, ink);
+        // Stepped towers, roof tanks, aerials, warehouses and rooftop cranes.
+        switch (i % 5) {
+          case 0: rect(x + 3, y - 5, width - 6, 5, ink); rect(x + width / 2, y - 11, 1, 6, ink); break;
+          case 1: rect(x + 3, y - 8, 8, 6, ink); rect(x + 4, y - 2, 1, 2, ink); rect(x + 9, y - 2, 1, 2, ink); break;
+          case 2: rect(x + 2, y - 14, 1, 14, ink); rect(x - 4, y - 14, 22, 1, ink); rect(x + 15, y - 14, 1, 7, ink); break;
+          case 3: rect(x - 3, y + 5, width + 7, height - 5, ink); break;
+          case 4: rect(x + 4, y - 4, 2, 4, ink); rect(x + 8, y - 7, 2, 7, ink); break;
+        }
+        if (layer) for (let a = 3; a < width - 2; a += 4) for (let b = 4; b < height - 2; b += 6) {
+          if ((i + a + b) % 3 !== 0) rect(x + a, y + b, 1, 2, (i + a + b) % 4 ? colors.bg : colors.accent);
+        }
+      }
+    }
+    // Solid foreground architecture is dangerous; amber edges mark each opening.
+    for (const p of game.passages) {
+      const bottom = p.gapY + p.gapHeight;
+      rect(p.x, 0, p.width, p.gapY, colors.fg);
+      rect(p.x, bottom, p.width, h - bottom, colors.fg);
+      for (let a = 3; a < p.width - 2; a += 5) {
+        for (let b = 4; b < h; b += 7) {
+          if (b + 2 < p.gapY - 3 || b > bottom + 3) rect(p.x + a, b, 2, 2, p.style === 1 ? colors.line : colors.bg);
+        }
+      }
+      rect(p.x, p.gapY - 2, p.width, 2, colors.accent);
+      rect(p.x, bottom, p.width, 2, colors.accent);
+      if (p.style === 2) {
+        for (let b = 0; b < p.gapY - 4; b += 5) rect(p.x + 1, b, p.width - 2, 1, colors.muted);
+      }
+    }
+    for (const shot of game.shots) rect(shot.x, shot.y, 5, 1, colors.accent);
+    for (const bolt of game.bolts) {
+      rect(bolt.x, bolt.y, 3, 2, colors.accent);
+      rect(bolt.x + 3, bolt.y, 2, 1, colors.fg);
+    }
+    for (const d of game.drones) {
+      if (d.kind === 'skimmer') {
+        rect(d.x + 4, d.y, 7, 1, colors.accent);
+        rect(d.x, d.y + 2, 9, 1, colors.accent);
+        rect(d.x + 4, d.y + 4, 7, 1, colors.accent);
+        rect(d.x + 3, d.y + 1, 5, 3, colors.accent);
+        rect(d.x + 4, d.y + 2, 2, 1, colors.bg);
+      } else if (d.kind === 'gunship') {
+        rect(d.x + 3, d.y, 8, 10, colors.accent);
+        rect(d.x, d.y + 2, 14, 6, colors.accent);
+        rect(d.x + 3, d.y + 3, 7, 4, colors.fg);
+        for (let i = 0; i < d.hp; i++) rect(d.x + 4 + i * 2, d.y + 4, 1, 2, colors.bg);
+        rect(d.x - 2, d.y + 4, 3, 2, colors.accent);
+      } else {
+        rect(d.x + 2, d.y, 5, 2, colors.accent);
+        rect(d.x, d.y + 2, 9, 3, colors.accent);
+        rect(d.x + 1, d.y + 5, 2, 2, colors.accent);
+        rect(d.x + 6, d.y + 5, 2, 2, colors.accent);
+        rect(d.x + 2, d.y + 2, 2, 1, colors.bg);
+      }
+    }
+    if (game.boss) {
+      const b = game.boss, x = b.x, y = b.y;
+      rect(x + 5, y, 19, 20, colors.fg);
+      rect(x, y + 4, 28, 12, colors.fg);
+      rect(x - 3, y + 8, 6, 4, colors.accent);
+      rect(x + 7, y + 3, 14, 14, colors.accent);
+      rect(x + 9, y + 5, 10, 10, colors.bg);
+      if (b.kind === 'carrier') {
+        rect(x + 11, y + 7, 6, 6, colors.fg);
+        rect(x + 5, y - 3, 5, 3, colors.accent);
+        rect(x + 5, y + 20, 5, 3, colors.accent);
+      } else {
+        rect(x - 2, y + 1, 9, 3, colors.accent);
+        rect(x - 2, y + 16, 9, 3, colors.accent);
+        rect(x + 12, y + 6, 4, 8, colors.accent);
+      }
+      rect(x + 25, y + 5, 3 + Math.floor(b.age * 8) % 3, 3, colors.accent);
+      rect(x + 25, y + 12, 3 + Math.floor(b.age * 8) % 3, 3, colors.accent);
+      rect(x, y - 7, 28, 2, colors.line);
+      rect(x, y - 7, Math.max(0, Math.ceil(28 * b.hp / b.maxHp)), 2, colors.accent);
+    }
+    if (game.invulnerable === 0 || Math.floor(game.elapsed * 12) % 2 === 0) {
+      const { x, y } = game;
+      rect(x - 3, y + 2, state === 'playing' ? 2 + Math.floor(game.elapsed * 20) % 3 : 3, 2, colors.accent);
+      rect(x, y, 3, 6, colors.fg);
+      rect(x + 3, y + 1, 5, 4, colors.fg);
+      rect(x + 8, y + 2, 3, 2, colors.fg);
+      rect(x + 3, y + 2, 3, 2, colors.accent);
+    }
+  }
+  function updateHud() {
+    const waveText = game.boss ? `${game.boss.kind.toUpperCase()} / WAVE ${game.boss.wave}`
+      : game.nextBossAt - game.elapsed <= 3 ? 'WARNING / BOSS INCOMING' : 'FLY RIGHT. KEEP GOING.';
+    if (waveLabel.value !== waveText) waveLabel.value = waveText;
+    speedLabel.value = `${(flightSpeed(game.elapsed) / 30).toFixed(1)}×`;
+    score.value = String(game.score + Math.floor(game.distance)).padStart(6, '0');
+    shields.textContent = Array.from({ length: 3 }, (_, i) => i < game.shields ? '◆' : '◇').join(' ');
+    shields.setAttribute('aria-label', `${game.shields} shields`);
+  }
+  function stop(next: 'paused' | 'over') {
+    if (state !== 'playing') return;
+    state = next; keys.clear(); cancelAnimationFrame(frame);
+    overlay.hidden = false; pause.disabled = true;
+    message.textContent = next === 'over' ? `Flight over. Score ${score.value}.` : 'Taking a breather.';
+    start.textContent = next === 'over' ? 'PRESS ENTER TO RETRY' : 'PRESS ENTER TO RESUME';
+    if (root.contains(document.activeElement)) start.focus({ preventScroll: true });
+  }
+  function tick(now: number) {
+    if (state !== 'playing') return;
+    const dt = Math.min((now - last) / 1000, .05); last = now;
+    stepFlight(game, keys, dt); draw();
+    hudTime += dt;
+    if (hudTime > .1 || game.shields <= 0) { updateHud(); hudTime = 0; }
+    if (game.shields <= 0) { stop('over'); return; }
+    frame = requestAnimationFrame(tick);
+  }
+  function begin() {
+    if (state === 'playing') return;
+    start.classList.remove('intro-flash');
+    if (state === 'ready' || state === 'over') game = newFlight(canvas.width, canvas.height);
+    state = 'playing'; overlay.hidden = true; pause.disabled = false;
+    canvas.focus({ preventScroll: true }); updateHud(); last = performance.now();
+    cancelAnimationFrame(frame); frame = requestAnimationFrame(tick);
+  }
+  start.addEventListener('click', begin);
+  // Enter works on arrival, without stealing Enter from links or other controls.
+  window.addEventListener('keydown', e => {
+    if (e.code !== 'Enter' || e.repeat || state === 'playing') return;
+    const target = e.target;
+    if (target !== document.body && target !== document.documentElement && target !== canvas && target !== start) return;
+    const bounds = root.getBoundingClientRect();
+    if (bounds.bottom <= 0 || bounds.top >= innerHeight) return;
+    e.preventDefault(); begin();
+  });
+  pause.addEventListener('click', () => stop('paused'));
+  root.addEventListener('keydown', e => {
+    if (e.code === 'Escape') { e.preventDefault(); stop('paused'); return; }
+    if (state !== 'playing' || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) return;
+    // Buttons keep their normal keyboard activation; canvas owns flight keys.
+    if (e.target !== canvas) return;
+    e.preventDefault(); keys.add(e.code);
+    if (e.code === 'Space') { fireShot(game); draw(); }
+  });
+  window.addEventListener('keyup', e => keys.delete(e.code));
+  window.addEventListener('blur', () => stop('paused'));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop('paused'); });
+  root.addEventListener('focusout', e => { if (!root.contains(e.relatedTarget as Node)) stop('paused'); });
+  for (const button of root.querySelectorAll<HTMLButtonElement>('[data-control]')) {
+    button.addEventListener('pointerdown', e => {
+      if (state !== 'playing') return;
+      e.preventDefault(); button.setPointerCapture(e.pointerId); keys.add(button.dataset.control!);
+      if (button.dataset.control === 'Space') { fireShot(game); draw(); }
+    });
+    const release = () => keys.delete(button.dataset.control!);
+    button.addEventListener('pointerup', release);
+    button.addEventListener('pointercancel', release);
+    button.addEventListener('lostpointercapture', release);
+  }
+  new IntersectionObserver(([entry]) => { if (!entry.isIntersecting) stop('paused'); }).observe(root);
+  new ResizeObserver(() => {
+    const width = Math.max(90, Math.round(canvas.getBoundingClientRect().width / 3));
+    const oldWidth = game.width;
+    canvas.width = width; game.width = width; game.x = Math.max(3, Math.min(width - 14, game.x / oldWidth * width));
+    if (game.boss) game.boss.x = Math.max(48, Math.min(width - 38, game.boss.x / oldWidth * width));
+    palette(); draw();
+  }).observe(canvas);
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { palette(); draw(); });
+  palette(); draw();
+</script>
+
+<style>
+  .sky-game { margin: 0 calc(-1 * var(--gutter)) 2.5rem; border-bottom: 1px solid var(--line); text-align: left; }
+  .game-hud, .game-bottom { display: flex; gap: 1rem; align-items: center; justify-content: space-between; padding: .8rem max(var(--gutter), calc((100% - 70rem) / 2)); font-size: .65rem; letter-spacing: .08em; color: var(--muted); }
+  .game-hud { border-bottom: 1px solid var(--line); }
+  .game-hud output { color: var(--fg); }
+  .game-shields { color: var(--accent); margin-left: 1rem; white-space: nowrap; }
+  button { font: inherit; color: var(--fg); border: 1px solid var(--line); background: var(--bg); cursor: pointer; border-radius: 0; }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: .4; cursor: default; }
+  .game-pause { padding: .35rem .6rem; }
+  .game-stage { position: relative; }
+  canvas { display: block; width: 100%; height: 288px; image-rendering: pixelated; outline-offset: -3px; }
+  .game-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+  .game-overlay[hidden] { display: none; }
+  .game-message { background: var(--bg); padding: .25rem .6rem; font-size: .8rem; margin: 0 0 .6rem; }
+  .game-start { pointer-events: auto; padding: .4rem .6rem; color: var(--accent); border: 0; background: var(--bg); font-size: clamp(.8rem, 2vw, 1rem); font-weight: 700; letter-spacing: .12em; }
+  .intro-flash { animation: insert-coin .8s steps(1, end) 3; }
+  @keyframes insert-coin { 0%, 49% { opacity: 1; } 50%, 99% { opacity: 0; } 100% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .intro-flash { animation: none; } }
+  .game-bottom { font-size: .6rem; flex-wrap: wrap; }
+  .game-bottom p { margin: 0; }
+  .game-bottom p span { margin: 0 .5rem; }
+  .game-touch { display: none; gap: .5rem; padding: 0 var(--gutter) 1rem; }
+  .game-touch button { min-width: 44px; min-height: 44px; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .game-touch button:last-child { margin-left: auto; color: var(--accent); padding: 0 1rem; }
+  @media (pointer: coarse), (max-width: 600px) { .game-touch { display: flex; } .game-bottom > output { font-size: .55rem; } .game-hud { gap: .5rem; font-size: .6rem; } .game-shields { margin-left: .3rem; } }
+</style>

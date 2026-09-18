@@ -1,6 +1,4 @@
 ---
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
 import { site } from '../data/site';
 import '../styles/global.css';
 
@@ -13,7 +11,6 @@ interface Props {
 const {
   title = site.title,
   description = site.description,
-  current = 'Overview',
   noindex = false,
 } = Astro.props;
 
@@ -30,62 +27,32 @@ const pageTitle = title === site.title ? site.title : `${title} — ${site.title
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex" />}
 
-    <meta name="theme-color" content="#f7f3ec" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#191a19" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4ead8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={site.title} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={new URL('/images/hero-mars.png', site.url)} />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content="summary" />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="author" href="/humans.txt" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <!-- Resolve the stored theme before first paint so there is no flash. -->
-    <script is:inline>
-      (() => {
-        try {
-          const stored = localStorage.getItem('theme');
-          const theme =
-            stored ??
-            (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-          document.documentElement.dataset.theme = theme;
-        } catch {
-          /* private mode — fall through to the light default */
-        }
-      })();
-    </script>
   </head>
 
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    <Header current={current} />
+    <div class="grain" aria-hidden="true"></div>
+    <slot name="banner" />
     <main id="main">
       <slot />
+      <hr class="rule" />
+      <footer>
+        <a href="https://github.com/ubyjvovk" rel="me">github.com/ubyjvovk</a>
+      </footer>
     </main>
-    <Footer />
-
-    <script>
-      const root = document.documentElement;
-      const toggle = document.querySelector<HTMLButtonElement>('#theme-toggle');
-
-      const sync = () => toggle?.setAttribute('aria-pressed', String(root.dataset.theme === 'dark'));
-      sync();
-
-      toggle?.addEventListener('click', () => {
-        const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
-        root.dataset.theme = next;
-        sync();
-        try {
-          localStorage.setItem('theme', next);
-        } catch {
-          /* nothing to persist to */
-        }
-      });
-    </script>
   </body>
 </html>

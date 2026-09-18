@@ -1,107 +1,39 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Hero from '../components/Hero.astro';
-import Icon from '../components/Icon.astro';
-import ProjectCard from '../components/ProjectCard.astro';
-import { projects, skills, about, githubUser } from '../data/site';
-import { recentRepos } from '../lib/github';
-
-const recent = await recentRepos(5);
-
-const writings = (await getCollection('writings', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 3);
-
-const shortDate = (d: Date) =>
-  d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+import Skyline from '../components/Skyline.astro';
+import { projects, site } from '../data/site';
 ---
 <BaseLayout>
-  <Hero />
+  <Skyline slot="banner" />
+  <header>
+    <h1>{site.title}</h1>
+    <p class="bio">
+      Building <a href="https://tigerteamapp.com">TigerTeamApp.com</a><span class="cursor" aria-hidden="true"></span>
+    </p>
+  </header>
 
-  <section id="projects" class="section shell">
-    <div class="section-heading">
-      <div>
-        <span class="glyph" aria-hidden="true">&gt;_</span>
-        <h2>Featured projects</h2>
-      </div>
-      <a href={`https://github.com/${githubUser}?tab=repositories`} target="_blank" rel="noreferrer">
-        all repositories ↗
-      </a>
-    </div>
+  <hr class="rule" />
 
-    <div class="project-grid">
-      {projects.map((project) => <ProjectCard project={project} />)}
-    </div>
-  </section>
-
-  <section id="about" class="about shell">
-    <div class="section-heading">
-      <div>
-        <span class="glyph" aria-hidden="true">//</span>
-        <h2>About</h2>
-      </div>
-    </div>
-    <div class="about-body">
-      {about.map((line) => <p>{line}</p>)}
-    </div>
-  </section>
-
-  <section class="lower shell">
-    <div class="lower-col">
-      <div class="mini-heading">
-        <span class="glyph" aria-hidden="true">&gt;_</span>
-        <h2>Latest on GitHub</h2>
-      </div>
-      <ul class="repo-list">
-        {recent.map((r) => (
-          <li>
-            <a href={r.href} target="_blank" rel="noreferrer">
-              <Icon name="repo" />
-              <span class="name">{r.name}</span>
-              <span class="when">{r.when}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-      <a class="more-link" href={`https://github.com/${githubUser}`} target="_blank" rel="noreferrer">
-        View more on GitHub →
-      </a>
-    </div>
-
-    <div class="lower-col" id="skills">
-      <div class="mini-heading">
-        <span class="glyph" aria-hidden="true">&lt;/&gt;</span>
-        <h2>Skills</h2>
-      </div>
-      <div class="skill-grid">
-        {skills.map((s) => <span>{s}</span>)}
-      </div>
-      <p class="skill-note">... and curiosity.</p>
-    </div>
-
-    <div class="lower-col" id="writings">
-      <div class="mini-heading">
-        <span class="glyph" aria-hidden="true"><Icon name="book" /></span>
-        <h2>Writings</h2>
-      </div>
-
-      {writings.length > 0 ? (
-        <ul class="writing-list">
-          {writings.map((w) => (
-            <li>
-              <a href={`/writings/${w.id}/`}>
-                <span>{w.data.title}</span>
-                <span class="when">{shortDate(w.data.date)}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p class="empty-note">Nothing published yet.</p>
-      )}
-
-      <a class="more-link" href="/writings/">Read more →</a>
-    </div>
+  <section aria-labelledby="projects-heading">
+    <h2 id="projects-heading">Projects</h2>
+    <ul class="projects">
+      {projects.map((project) => (
+        <li>
+          <a class="project-preview" href={project.live ?? project.repo}>
+            <img src={project.preview} alt={project.previewAlt} width="832" height="468" loading="lazy" decoding="async" />
+          </a>
+          <p class="title">
+            <a class="name" href={project.repo ?? project.live}>{project.name}</a>
+            {project.live && project.repo && (
+              <>
+                <span class="sep" aria-hidden="true">/</span>
+                <a class="aux" href={project.live} aria-label={`Open ${project.name}`}>{project.name === 'asciicity' ? 'play' : 'open'}</a>
+              </>
+            )}
+          </p>
+          <p>{project.blurb}</p>
+        </li>
+      ))}
+    </ul>
   </section>
 </BaseLayout>
